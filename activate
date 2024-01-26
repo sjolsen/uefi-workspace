@@ -1,0 +1,9 @@
+# This file must be sourced from the workspace root.
+
+export WORKSPACE="$PWD"
+export CONF_PATH="$WORKSPACE/Conf"
+export EDK_TOOLS_PATH="$WORKSPACE/edk2/BaseTools"
+export PACKAGES_PATH="$WORKSPACE/edk2:$WORKSPACE/refinery"
+
+mkdir -p "$CONF_PATH"
+. "$WORKSPACE/edk2/edksetup.sh"
