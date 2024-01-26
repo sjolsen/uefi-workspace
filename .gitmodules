@@ -4,3 +4,4 @@
 [submodule "refinery"]
 	path = refinery
 	url = git@github.com:sjolsen/refinery.git
+	branch = main
