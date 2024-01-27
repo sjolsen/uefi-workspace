@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import ast
 import dataclasses
 import os
 import os.path
@@ -27,7 +28,7 @@ def activate() -> Env:
     parent = os.path.dirname(os.path.abspath(__file__))
     script = os.path.join(parent, 'activate')
 
-    print_env = 'export -p | sed "s/^export/echo/" | sh -'
+    print_env = 'python3 -c "import os; print(dict(os.environ))"'
     command = f'. {script} >/dev/null; {print_env}'
     cp = subprocess.run(
         ['sh', '-c', command],
@@ -35,13 +36,7 @@ def activate() -> Env:
         capture_output=True,
         text=True,
         check=True)
-
-    environ = {}
-    for line in cp.stdout.splitlines():
-        line = line.strip()
-        match line.split('=', maxsplit=1):
-            case [key, value]:
-                environ[key] = value
+    environ = ast.literal_eval(cp.stdout)
 
     return Env(
         environ=environ,
