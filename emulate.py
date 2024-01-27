@@ -29,7 +29,7 @@ def activate() -> Env:
     script = os.path.join(parent, 'activate')
 
     print_env = 'python3 -c "import os; print(dict(os.environ))"'
-    command = f'. {script} >/dev/null; {print_env}'
+    command = f'. {script} >/dev/null; exec {print_env}'
     cp = subprocess.run(
         ['sh', '-c', command],
         cwd=parent,
