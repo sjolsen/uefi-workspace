@@ -8,6 +8,8 @@ import subprocess
 import sys
 import tempfile
 
+USAGE = 'Usage: emulate.py [basetools|ovmf|build|buildall|run]'
+
 
 def copy_file(src: str, dst: str):
     os.makedirs(os.path.dirname(dst), exist_ok=True)
@@ -16,28 +18,58 @@ def copy_file(src: str, dst: str):
 
 @dataclasses.dataclass
 class Env:
+    environ: dict[str, str]
     workspace: str
     basetools: str
 
 
-def getenv() -> Env:
+def activate() -> Env:
+    parent = os.path.dirname(os.path.abspath(__file__))
+    script = os.path.join(parent, 'activate')
 
-    def get(key: str) -> str:
-        try:
-            return os.environ[key]
-        except KeyError:
-            raise RuntimeError(f'{key} is not set (did you run ". activate"?)')
+    print_env = 'export -p | sed "s/^export/echo/" | sh -'
+    command = f'. {script} >/dev/null; {print_env}'
+    cp = subprocess.run(
+        ['sh', '-c', command],
+        cwd=parent,
+        capture_output=True,
+        text=True,
+        check=True)
+
+    environ = {}
+    for line in cp.stdout.splitlines():
+        line = line.strip()
+        match line.split('=', maxsplit=1):
+            case [key, value]:
+                environ[key] = value
 
     return Env(
-        workspace=get('WORKSPACE'),
-        basetools=get('EDK_TOOLS_PATH'))
+        environ=environ,
+        workspace=environ['WORKSPACE'],
+        basetools=environ['EDK_TOOLS_PATH'])
 
 
 def basetools(env: Env):
     make_args = ['make']
     make_args.extend(['-j', str(len(os.sched_getaffinity(0)))])
     make_args.extend(['-C', env.basetools])
-    subprocess.run(make_args)
+    subprocess.run(make_args, env=env.environ, check=True)
+
+
+def ovmf(env: Env):
+    args = ['build', '-p', 'OvmfPkg/OvmfPkgX64.dsc']
+    subprocess.run(args, env=env.environ, check=True)
+
+
+def build(env: Env):
+    args = ['build', '-p', 'RefineryPkg/RefineryPkg.dsc']
+    subprocess.run(args, env=env.environ, check=True)
+
+
+def buildall(env: Env):
+    basetools(env)
+    ovmf(env)
+    build(env)
 
 
 def run(env: Env):
@@ -58,26 +90,25 @@ def run(env: Env):
         qemu_args.extend(['-device', 'VGA,xres=800,yres=600'])
         qemu_args.extend(['-drive', f'if=pflash,unit=0,format=raw,file={bios}'])
         qemu_args.extend(['-drive', f'format=raw,file=fat:rw:{hda}'])
-        subprocess.run(qemu_args)
+        subprocess.run(qemu_args, env=env.environ, check=True)
 
 
 def main(argv: list[str]) -> int:
-    USAGE = 'Usage: emulate.py [basetools|ovmf|build|run]'
-    env = getenv()
-
+    env = activate()
     match argv:
         case [_, 'basetools']:
             basetools(env)
         case [_, 'ovmf']:
-            subprocess.run(['build', '-p', 'OvmfPkg/OvmfPkgX64.dsc'])
+            ovmf(env)
         case [_, 'build']:
-            subprocess.run(['build', '-p', 'RefineryPkg/RefineryPkg.dsc'])
+            build(env)
+        case [_, 'buildall']:
+            buildall(env)
         case [_, 'run']:
             run(env)
         case _:
             print(USAGE, file=sys.stderr)
             return 1
-
     return 0
 
 if __name__ == '__main__':
