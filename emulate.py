@@ -48,9 +48,9 @@ def run(env: common.Env):
         bios = os.path.join(tmpdir, 'OVMF.fd')
         hda = os.path.join(tmpdir, 'hda')
 
-        copy_file(os.path.join(builddir, 'OvmfX64/DEBUG_GCC5/FV/OVMF.fd'), bios)
+        copy_file(os.path.join(builddir, 'OvmfX64/DEBUG_GCC/FV/OVMF.fd'), bios)
         copy_file(
-            os.path.join(builddir, 'Refinery/DEBUG_GCC5/X64/Refinery.efi'),
+            os.path.join(builddir, 'Refinery/DEBUG_GCC/X64/Refinery.efi'),
             os.path.join(hda, 'EFI/BOOT/BOOTx64.efi'))
 
         qemu_args = ['qemu-system-x86_64']
