@@ -2,3 +2,4 @@ Build/
 Conf/*
 !Conf/target.txt
 .venv/
+__pycache__/

@@ -1,13 +1,13 @@
 #!/usr/bin/python3
 
-import ast
-import dataclasses
 import os
 import os.path
 import shutil
 import subprocess
 import sys
 import tempfile
+
+import common
 
 USAGE = 'Usage: emulate.py [basetools|ovmf|build|buildall|run]'
 
@@ -17,57 +17,30 @@ def copy_file(src: str, dst: str):
     shutil.copy(src, dst)
 
 
-@dataclasses.dataclass
-class Env:
-    environ: dict[str, str]
-    workspace: str
-    basetools: str
-
-
-def activate() -> Env:
-    parent = os.path.dirname(os.path.abspath(__file__))
-    script = os.path.join(parent, 'activate')
-
-    print_env = 'python3 -c "import os; print(dict(os.environ))"'
-    command = f'. {script} >/dev/null; exec {print_env}'
-    cp = subprocess.run(
-        ['sh', '-c', command],
-        cwd=parent,
-        capture_output=True,
-        text=True,
-        check=True)
-    environ = ast.literal_eval(cp.stdout)
-
-    return Env(
-        environ=environ,
-        workspace=environ['WORKSPACE'],
-        basetools=environ['EDK_TOOLS_PATH'])
-
-
-def basetools(env: Env):
+def basetools(env: common.Env):
     make_args = ['make']
     make_args.extend(['-j', str(len(os.sched_getaffinity(0)))])
     make_args.extend(['-C', env.basetools])
     subprocess.run(make_args, env=env.environ, check=True)
 
 
-def ovmf(env: Env):
+def ovmf(env: common.Env):
     args = ['build', '-p', 'OvmfPkg/OvmfPkgX64.dsc']
     subprocess.run(args, env=env.environ, check=True)
 
 
-def build(env: Env):
+def build(env: common.Env):
     args = ['build', '-p', 'RefineryPkg/RefineryPkg.dsc']
     subprocess.run(args, env=env.environ, check=True)
 
 
-def buildall(env: Env):
+def buildall(env: common.Env):
     basetools(env)
     ovmf(env)
     build(env)
 
 
-def run(env: Env):
+def run(env: common.Env):
     builddir = os.path.join(env.workspace, 'Build')
     os.makedirs(builddir, exist_ok=True)
 
@@ -89,7 +62,7 @@ def run(env: Env):
 
 
 def main(argv: list[str]) -> int:
-    env = activate()
+    env = common.activate()
     match argv:
         case [_, 'basetools']:
             basetools(env)
