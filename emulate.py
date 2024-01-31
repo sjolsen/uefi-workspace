@@ -52,6 +52,9 @@ def run(env: common.Env):
         copy_file(
             os.path.join(builddir, 'Refinery/DEBUG_GCC/X64/Refinery.efi'),
             os.path.join(hda, 'EFI/BOOT/BOOTx64.efi'))
+        copy_file(
+            os.path.join(builddir, 'Refinery/DEBUG_GCC/X64/UsbMouseDxe.efi'),
+            os.path.join(hda, 'EFI/Drivers/USBMouseDxe.efi'))
 
         qemu_args = ['qemu-system-x86_64']
         qemu_args.extend(['-net', 'none'])
