@@ -56,7 +56,7 @@ def run(env: common.Env):
         qemu_args = ['qemu-system-x86_64']
         qemu_args.extend(['-net', 'none'])
         qemu_args.extend(['-device', 'VGA,xres=640,yres=480'])
-        qemu_args.extend(['-display', 'gtk,gl=on'])
+        qemu_args.extend(['-display', 'gtk,gl=es'])
         qemu_args.extend(['-drive', f'if=pflash,unit=0,format=raw,file={bios}'])
         qemu_args.extend(['-drive', f'format=raw,file=fat:rw:{hda}'])
         subprocess.run(qemu_args, env=env.environ, check=True)
