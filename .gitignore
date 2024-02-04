@@ -1,5 +1,6 @@
 Build/
 Conf/*
 !Conf/target.txt
+debug.log
 .venv/
 __pycache__/

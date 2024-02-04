@@ -9,7 +9,7 @@ import tempfile
 
 import common
 
-USAGE = 'Usage: emulate.py [basetools|ovmf|build|buildall|run]'
+USAGE = 'Usage: emulate.py [basetools|ovmf|build|buildall|run|debug]'
 
 
 def copy_file(src: str, dst: str):
@@ -40,7 +40,7 @@ def buildall(env: common.Env):
     build(env)
 
 
-def run(env: common.Env):
+def run(env: common.Env, debug: bool = False):
     builddir = os.path.join(env.workspace, 'Build')
     os.makedirs(builddir, exist_ok=True)
 
@@ -64,6 +64,12 @@ def run(env: common.Env):
         qemu_args.extend(['-device', 'usb-mouse'])
         qemu_args.extend(['-drive', f'if=pflash,unit=0,format=raw,file={bios}'])
         qemu_args.extend(['-drive', f'format=raw,file=fat:rw:{hda}'])
+
+        if debug:
+            debug_file = os.path.join(env.workspace, 'debug.log')
+            qemu_args.extend(['-debugcon', f'file:{debug_file}'])
+            qemu_args.extend(['-global', 'isa-debugcon.iobase=0x402'])
+
         subprocess.run(qemu_args, env=env.environ, check=True)
 
 
@@ -80,6 +86,8 @@ def main(argv: list[str]) -> int:
             buildall(env)
         case [_, 'run']:
             run(env)
+        case [_, 'debug']:
+            run(env, debug=True)
         case _:
             print(USAGE, file=sys.stderr)
             return 1
