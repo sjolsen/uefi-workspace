@@ -25,7 +25,7 @@ def main(argv: list[str]):
     args.extend(['-c', config])
     args.extend(['--replace', '--no-backup'])
     args.extend(files)
-    subprocess.run(args, env=env.environ, check=True)
+    env.run(args)
 
 if __name__ == '__main__':
     main(sys.argv)

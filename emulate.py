@@ -21,17 +21,15 @@ def basetools(env: common.Env):
     make_args = ['make']
     make_args.extend(['-j', str(len(os.sched_getaffinity(0)))])
     make_args.extend(['-C', env.basetools])
-    subprocess.run(make_args, env=env.environ, check=True)
+    env.run(make_args)
 
 
 def ovmf(env: common.Env):
-    args = ['build', '-p', 'OvmfPkg/OvmfPkgX64.dsc']
-    subprocess.run(args, env=env.environ, check=True)
+    env.run(['build', '-p', 'OvmfPkg/OvmfPkgX64.dsc'])
 
 
 def build(env: common.Env):
-    args = ['build', '-p', 'RefineryPkg/RefineryPkg.dsc']
-    subprocess.run(args, env=env.environ, check=True)
+    env.run(['build', '-p', 'RefineryPkg/RefineryPkg.dsc'])
 
 
 def buildall(env: common.Env):
@@ -70,7 +68,7 @@ def run(env: common.Env, debug: bool = False):
             qemu_args.extend(['-debugcon', f'file:{debug_file}'])
             qemu_args.extend(['-global', 'isa-debugcon.iobase=0x402'])
 
-        subprocess.run(qemu_args, env=env.environ, check=True)
+        env.run(qemu_args)
 
 
 def main(argv: list[str]) -> int:
