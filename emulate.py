@@ -9,7 +9,7 @@ import tempfile
 
 import common
 
-USAGE = 'Usage: emulate.py [basetools|ovmf|build|buildall|run|debug]'
+USAGE = 'Usage: emulate.py [basetools|ovmf|build|buildall|run|debug|test]'
 
 
 def copy_file(src: str, dst: str):
@@ -71,6 +71,20 @@ def run(env: common.Env, debug: bool = False):
         env.run(qemu_args)
 
 
+TESTS = [
+    'BoraxRuntimeTest',
+]
+
+
+def test(env: common.Env):
+    env.run(['build', '-p', 'BoraxPkg/BoraxPkg.dsc'])
+    builddir = os.path.join(env.workspace, 'Build')
+    test_base = os.path.join(builddir, 'Borax/DEBUG_GCC/X64')
+    for test in TESTS:
+        test_bin = os.path.join(test_base, test)
+        env.run(['valgrind', test_bin])
+
+
 def main(argv: list[str]) -> int:
     env = common.activate()
     match argv:
@@ -86,6 +100,8 @@ def main(argv: list[str]) -> int:
             run(env)
         case [_, 'debug']:
             run(env, debug=True)
+        case [_, 'test']:
+            test(env)
         case _:
             print(USAGE, file=sys.stderr)
             return 1
