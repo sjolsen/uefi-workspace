@@ -76,10 +76,10 @@ TESTS = [
 ]
 
 
-def test(env: common.Env):
-    env.run(['build', '-p', 'BoraxPkg/BoraxPkg.dsc'])
+def test(env: common.Env, arch: str = 'X64'):
+    env.run(['build', '-p', 'BoraxPkg/BoraxPkg.dsc', '-a', arch])
     builddir = os.path.join(env.workspace, 'Build')
-    test_base = os.path.join(builddir, 'Borax/DEBUG_GCC/X64')
+    test_base = os.path.join(builddir, f'Borax/DEBUG_GCC/{arch}')
     for test in TESTS:
         test_bin = os.path.join(test_base, test)
         env.run(['valgrind', test_bin])
@@ -101,7 +101,8 @@ def main(argv: list[str]) -> int:
         case [_, 'debug']:
             run(env, debug=True)
         case [_, 'test']:
-            test(env)
+            test(env, arch='IA32')
+            test(env, arch='X64')
         case _:
             print(USAGE, file=sys.stderr)
             return 1
