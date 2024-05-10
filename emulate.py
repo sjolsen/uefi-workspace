@@ -80,9 +80,12 @@ def test(env: common.Env, arch: str = 'X64'):
     env.run(['build', '-p', 'BoraxPkg/BoraxPkg.dsc', '-a', arch])
     builddir = os.path.join(env.workspace, 'Build')
     test_base = os.path.join(builddir, f'Borax/DEBUG_GCC/{arch}')
+    test_file = os.path.join(
+        env.workspace,
+        f'refinery/BoraxPkg/Test/BoraxRuntimeTest/TestFile{arch}.bxo')
     for test in TESTS:
         test_bin = os.path.join(test_base, test)
-        env.run(['valgrind', test_bin])
+        env.run(['valgrind', '--error-exitcode=1', test_bin, test_file])
 
 
 def main(argv: list[str]) -> int:
