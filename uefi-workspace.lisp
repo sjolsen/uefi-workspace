@@ -4,7 +4,7 @@
   (:use-reexport :uefi-workspace/edk2)
   (:export #:reload
            #:uncrustify
-           #:build-ovmf #:build-refinery
+           #:build-basetools #:build-ovmf #:build-refinery
            #:test-c #:test-lisp #:test))
 
 (in-package :uefi-workspace)
