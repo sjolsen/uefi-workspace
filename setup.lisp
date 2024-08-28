@@ -8,3 +8,5 @@
    (:tree (:here "refinery/BoraxPkg/Lisp"))))
 
 (asdf:load-system :uefi-workspace)
+
+(uefi-workspace:activate)

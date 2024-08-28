@@ -1,6 +1,7 @@
 (uiop:define-package :uefi-workspace
-  (:use :uiop/common-lisp :asdf)
-  (:use-reexport :borax-build/c-testing))
+  (:use :uiop/common-lisp)
+  (:use-reexport :uefi-workspace/edk2 :borax-build/c-testing)
+  (:export #:test))
 
 (in-package :uefi-workspace)
 
