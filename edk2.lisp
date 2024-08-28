@@ -17,16 +17,14 @@
 (defenv *packages-path* "PACKAGES_PATH")
 
 (defun get-raw-environment ()
-  (let* ((activate (uiop:merge-pathnames* #P"activate" *workspace*))
-         (script (with-output-to-string (s)
-                   (format s ". ~S >/dev/null~%" (namestring activate))
-                   (format s "exec sbcl --script~%"))))
-    (flet ((provide-input (s)
-             (print '(prin1 (sb-ext:posix-environ)) s)))
-      (uiop:run-program script :force-shell t
-                               :input #'provide-input
-                               :output #'read
-                               :error-output t))))
+  (uiop:chdir *workspace*)
+  (flet ((provide-input (s)
+           (print '(prin1 (sb-ext:posix-environ)) s)))
+    (uiop:run-program ". ./activate >/dev/null && exec sbcl --script"
+                      :force-shell t
+                      :input #'provide-input
+                      :output #'read
+                      :error-output t)))
 
 (defun get-environment ()
   (loop with hash-table = (make-hash-table :test 'equal)
