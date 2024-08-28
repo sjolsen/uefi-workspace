@@ -1,8 +1,10 @@
 (uiop:define-package :uefi-workspace/edk2
   (:use :uiop/common-lisp)
   (:export #:*workspace* #:*conf-path* #:*edk-tools-path* #:*packages-path*
+           #:join #:run-program
            #:activate
-           #:*build-dir* #:build))
+           #:*build-dir* #:build
+           #:uncrustify))
 
 (in-package :uefi-workspace/edk2)
 
@@ -15,6 +17,19 @@
 (defenv *conf-path* "CONF_PATH")
 (defenv *edk-tools-path* "EDK_TOOLS_PATH")
 (defenv *packages-path* "PACKAGES_PATH")
+
+(defun join (root &rest paths)
+  (dolist (path paths)
+    (setf root (uiop:merge-pathnames* path root)))
+  root)
+
+(defgeneric stringify-program-argument (arg)
+  (:method ((arg string)) arg)
+  (:method ((arg pathname)) (namestring arg))
+  (:method ((arg list)) (mapcar #'stringify-program-argument arg)))
+
+(defun run-program (command &rest keys)
+  (apply #'uiop:run-program (stringify-program-argument command) keys))
 
 (defun get-raw-environment ()
   (uiop:chdir *workspace*)
@@ -42,10 +57,25 @@
           do (setf (uiop:getenv key) value))))
 
 (defvar *build-dir*
-  (uiop:merge-pathnames* #P"Build/" *workspace*))
+  (join *workspace* #P"Build/"))
 
 (defun build (platform &key arch)
   (let* ((arch-args (when arch
                       (list "-a" (string arch))))
-         (args (list* "build" "-p" (namestring platform) arch-args)))
-    (uiop:run-program args :error-output t)))
+         (args (list* "build" "-p" platform arch-args)))
+    (run-program args :error-output t)))
+
+(defun find-source-files (root)
+  (let ((wildcard (join root #P"**/*"))
+        (extensions '("h" "c" "hpp" "cpp")))
+    (loop for extension in extensions
+          nconcing (uiop:directory* (join wildcard (make-pathname :type extension))))))
+
+(defun uncrustify (&optional root)
+  (let* ((plugin-dir (join *workspace* #P"edk2/.pytool/Plugin/UncrustifyCheck/"))
+         (uncrustify (join plugin-dir #P"mu-uncrustify-release_extdep/Linux-x86/uncrustify"))
+         (config (join plugin-dir #P"uncrustify.cfg"))
+         (files (find-source-files (or root (join *workspace* #P"refinery/"))))
+         (args (list* uncrustify "-c" config "--replace" "--no-backup" files)))
+    (run-program args))
+  (values))

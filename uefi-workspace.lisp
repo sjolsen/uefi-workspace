@@ -10,18 +10,14 @@
   (asdf:load-system :uefi-workspace))
 
 (defun test-c (arch memory-model)
-  (let* ((test-base (uiop:merge-pathnames*
-                     (format nil "Borax/DEBUG_GCC/~A/" (string arch))
-                     *build-dir*))
-         (test-bin (uiop:merge-pathnames* #P"BoraxVirtualMachineTest" test-base))
-         (test-file (uiop:merge-pathnames* #P"TestFile.bxo" test-base)))
+  (let* ((test-base (join *build-dir* (format nil "Borax/DEBUG_GCC/~A/" (string arch))))
+         (test-bin (join test-base #P"BoraxVirtualMachineTest"))
+         (test-file (join test-base #P"TestFile.bxo")))
     (make-test-file test-file memory-model)
     (build #P"BoraxPkg/BoraxPkg.dsc" :arch arch)
-    (uiop:run-program (list "valgrind" "--error-exitcode=1"
-                            (namestring test-bin)
-                            (namestring test-file))
-                      :output t
-                      :error-output t)))
+    (run-program (list "valgrind" "--error-exitcode=1" test-bin test-file)
+                 :output t
+                 :error-output t)))
 
 (defun test-lisp ()
   (asdf:test-system :borax-virtual-machine))
