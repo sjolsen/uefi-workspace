@@ -2,7 +2,10 @@
   (:mix :uiop/common-lisp :borax-virtual-machine/image)
   (:use :borax-build/c-testing)
   (:use-reexport :uefi-workspace/edk2)
-  (:export #:reload #:test-c #:test-lisp #:test))
+  (:export #:reload
+           #:uncrustify
+           #:build-ovmf #:build-refinery
+           #:test-c #:test-lisp #:test))
 
 (in-package :uefi-workspace)
 
@@ -12,6 +15,17 @@
 (defun uncrustify ()
   (uncrustify-files (find-source-files (join *workspace* #P"refinery/"))))
 
+(defun build-basetools ()
+  (run-program (list "make" "-j" "-C" *edk-tools-path*)
+               :error-output t)
+  (values))
+
+(defun build-ovmf ()
+  (build #P"OvmfPkg/OvmfPkgX64.dsc"))
+
+(defun build-refinery ()
+  (build #P"RefineryPkg/RefineryPkg.dsc"))
+
 (defun test-c (arch memory-model)
   (let* ((test-base (join *build-dir* (format nil "Borax/DEBUG_GCC/~A/" (string arch))))
          (test-bin (join test-base #P"BoraxVirtualMachineTest"))
@@ -20,7 +34,8 @@
     (build #P"BoraxPkg/BoraxPkg.dsc" :arch arch)
     (run-program (list "valgrind" "--error-exitcode=1" test-bin test-file)
                  :output t
-                 :error-output t)))
+                 :error-output t))
+  (values))
 
 (defun test-lisp ()
   (asdf:test-system :borax-virtual-machine))
@@ -29,5 +44,4 @@
   (test-lisp)
   (fresh-line)
   (test-c :IA32 +32-bit+)
-  (test-c :X64 +64-bit+)
-  (values))
+  (test-c :X64 +64-bit+))

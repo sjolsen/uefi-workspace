@@ -17,27 +17,6 @@ def copy_file(src: str, dst: str):
     shutil.copy(src, dst)
 
 
-def basetools(env: common.Env):
-    make_args = ['make']
-    make_args.extend(['-j', str(len(os.sched_getaffinity(0)))])
-    make_args.extend(['-C', env.basetools])
-    env.run(make_args)
-
-
-def ovmf(env: common.Env):
-    env.run(['build', '-p', 'OvmfPkg/OvmfPkgX64.dsc'])
-
-
-def build(env: common.Env):
-    env.run(['build', '-p', 'RefineryPkg/RefineryPkg.dsc'])
-
-
-def buildall(env: common.Env):
-    basetools(env)
-    ovmf(env)
-    build(env)
-
-
 def run(env: common.Env, debug: bool = False):
     builddir = os.path.join(env.workspace, 'Build')
     os.makedirs(builddir, exist_ok=True)
@@ -74,14 +53,6 @@ def run(env: common.Env, debug: bool = False):
 def main(argv: list[str]) -> int:
     env = common.activate()
     match argv:
-        case [_, 'basetools']:
-            basetools(env)
-        case [_, 'ovmf']:
-            ovmf(env)
-        case [_, 'build']:
-            build(env)
-        case [_, 'buildall']:
-            buildall(env)
         case [_, 'run']:
             run(env)
         case [_, 'debug']:
