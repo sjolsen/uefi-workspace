@@ -1,7 +1,8 @@
 (uiop:define-package :uefi-workspace/edk2
   (:use :uiop/common-lisp)
   (:export #:*workspace* #:*conf-path* #:*edk-tools-path* #:*packages-path*
-           #:activate))
+           #:activate
+           #:*build-dir* #:build))
 
 (in-package :uefi-workspace/edk2)
 
@@ -41,3 +42,12 @@
     (loop for key being each hash-key of env
           for value being each hash-value of env
           do (setf (uiop:getenv key) value))))
+
+(defvar *build-dir*
+  (uiop:merge-pathnames* #P"Build/" *workspace*))
+
+(defun build (platform &key arch)
+  (let* ((arch-args (when arch
+                      (list "-a" (string arch))))
+         (args (list* "build" "-p" (namestring platform) arch-args)))
+    (uiop:run-program args :error-output t)))
