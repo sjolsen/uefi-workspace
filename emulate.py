@@ -22,10 +22,9 @@ def run(env: common.Env, debug: bool = False):
     os.makedirs(builddir, exist_ok=True)
 
     with tempfile.TemporaryDirectory(dir=builddir, prefix='_emulate') as tmpdir:
-        bios = os.path.join(tmpdir, 'OVMF.fd')
+        bios = os.path.join(builddir, 'OvmfX64/DEBUG_GCC/FV/OVMF.fd')
         hda = os.path.join(tmpdir, 'hda')
 
-        copy_file(os.path.join(builddir, 'OvmfX64/DEBUG_GCC/FV/OVMF.fd'), bios)
         copy_file(
             os.path.join(builddir, 'Refinery/DEBUG_GCC/X64/Refinery.efi'),
             os.path.join(hda, 'EFI/BOOT/BOOTx64.efi'))
@@ -40,7 +39,8 @@ def run(env: common.Env, debug: bool = False):
         qemu_args.extend(['-usb'])
         qemu_args.extend(['-device', 'usb-mouse'])
         qemu_args.extend(['-drive', f'if=pflash,unit=0,format=raw,file={bios}'])
-        qemu_args.extend(['-drive', f'format=raw,file=fat:rw:{hda}'])
+        qemu_args.extend(['-drive', f'format=raw,file=fat:{hda}'])
+        qemu_args.extend(['-snapshot'])
 
         if debug:
             debug_file = os.path.join(env.workspace, 'debug.log')
