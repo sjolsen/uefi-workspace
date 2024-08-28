@@ -4,7 +4,7 @@
            #:join #:run-program
            #:activate
            #:*build-dir* #:build
-           #:uncrustify))
+           #:find-source-files #:uncrustify-files))
 
 (in-package :uefi-workspace/edk2)
 
@@ -71,11 +71,10 @@
     (loop for extension in extensions
           nconcing (uiop:directory* (join wildcard (make-pathname :type extension))))))
 
-(defun uncrustify (&optional root)
+(defun uncrustify-files (files)
   (let* ((plugin-dir (join *workspace* #P"edk2/.pytool/Plugin/UncrustifyCheck/"))
          (uncrustify (join plugin-dir #P"mu-uncrustify-release_extdep/Linux-x86/uncrustify"))
          (config (join plugin-dir #P"uncrustify.cfg"))
-         (files (find-source-files (or root (join *workspace* #P"refinery/"))))
          (args (list* uncrustify "-c" config "--replace" "--no-backup" files)))
     (run-program args))
   (values))

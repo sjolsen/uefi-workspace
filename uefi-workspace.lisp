@@ -9,6 +9,9 @@
 (defun reload ()
   (asdf:load-system :uefi-workspace))
 
+(defun uncrustify ()
+  (uncrustify-files (find-source-files (join *workspace* #P"refinery/"))))
+
 (defun test-c (arch memory-model)
   (let* ((test-base (join *build-dir* (format nil "Borax/DEBUG_GCC/~A/" (string arch))))
          (test-bin (join test-base #P"BoraxVirtualMachineTest"))
