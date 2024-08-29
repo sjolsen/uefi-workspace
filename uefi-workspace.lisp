@@ -1,6 +1,7 @@
 (uiop:define-package :uefi-workspace
   (:mix :uiop/common-lisp :borax-virtual-machine/image)
-  (:use :borax-build/c-testing)
+  (:use :borax-build/c-testing :borax-virtual-machine/initial-image
+        :borax-virtual-machine/object-file)
   (:use-reexport :uefi-workspace/edk2)
   (:export #:reload
            #:uncrustify
@@ -49,6 +50,14 @@
                (join hda #P"EFI/BOOT/BOOTx64.efi"))
       (symlink (join *build-dir* #P"Refinery/DEBUG_GCC/X64/UsbMouseDxe.efi")
                (join hda #P"EFI/Refinery/Drivers/USBMouseDxe.efi")))
+    (with-open-file (stream (join hda #P"EFI/Refinery/initial-image.bxo")
+                            :direction :output
+                            :element-type '(unsigned-byte 8)
+                            :if-exists :supersede
+                            :if-does-not-exist :create)
+      (with-image +64-bit+
+        (let ((root (make-initial-image)))
+          (write-object-file root stream))))
     (let* ((bios (join *build-dir* #P"OvmfX64/DEBUG_GCC/FV/OVMF.fd"))
            (args (list "qemu-system-x86_64"
                        "-net" "none"

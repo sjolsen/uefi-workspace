@@ -1,5 +1,5 @@
 ;; TODO: vendor dependencies
-(ql:quickload '(:clunit :flexi-streams) :silent t)
+(ql:quickload '(:closer-mop :clunit :flexi-streams) :silent t)
 
 (asdf:initialize-source-registry
  '(:source-registry
