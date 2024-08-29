@@ -81,6 +81,7 @@
   (let* ((test-base (join *build-dir* (format nil "Borax/DEBUG_GCC/~A/" (string arch))))
          (test-bin (join test-base #P"BoraxVirtualMachineTest"))
          (test-file (join test-base #P"TestFile.bxo")))
+    (ensure-directories-exist test-file)
     (make-test-file test-file memory-model)
     (build #P"BoraxPkg/BoraxPkg.dsc" :arch arch)
     (run-program (list "valgrind" "--error-exitcode=1" test-bin test-file)
