@@ -4,30 +4,42 @@
   (:use-reexport :uefi-workspace/edk2)
   (:export #:reload
            #:uncrustify
-           #:build-basetools #:build-ovmf #:build-refinery
+           #:build-basetools #:build-ovmf #:build-refinery #:build-all
            #:run-qemu
            #:test-c #:test-lisp #:test))
 
 (in-package :uefi-workspace)
 
 (defun reload ()
+  "Reload the development environment from source"
   (asdf:load-system :uefi-workspace))
 
 (defun uncrustify ()
+  "Auto-format C/C++ sources in the refinery tree"
   (uncrustify-files (find-source-files (join *workspace* #P"refinery/"))))
 
 (defun build-basetools ()
+  "Build EDK II's internal build tools"
   (run-program (list "make" "-j" "-C" *edk-tools-path*)
                :error-output t)
   (values))
 
 (defun build-ovmf ()
+  "Build a UEFI firmware image for QEMU"
   (build #P"OvmfPkg/OvmfPkgX64.dsc"))
 
 (defun build-refinery ()
+  "Build the Refinery application"
   (build #P"RefineryPkg/RefineryPkg.dsc"))
 
+(defun build-all ()
+  "Build all the software needed to run the Refinery application"
+  (build-basetools)
+  (build-ovmf)
+  (build-refinery))
+
 (defun run-qemu (&key debug)
+  "Launch QEMU and boot into the Refinery application"
   (let ((hda (join *build-dir* #P"hda/")))
     (flet ((symlink (old new)
              (unless (uiop:file-exists-p new)
@@ -56,6 +68,7 @@
   (values))
 
 (defun test-c (arch memory-model)
+  "Build and run the unit tests for the C implementation of Borax"
   (let* ((test-base (join *build-dir* (format nil "Borax/DEBUG_GCC/~A/" (string arch))))
          (test-bin (join test-base #P"BoraxVirtualMachineTest"))
          (test-file (join test-base #P"TestFile.bxo")))
@@ -67,9 +80,11 @@
   (values))
 
 (defun test-lisp ()
+  "Run unit tests for the Common Lisp implementation of Borax"
   (asdf:test-system :borax-virtual-machine))
 
 (defun test ()
+  "Run all tests"
   (test-lisp)
   (fresh-line)
   (test-c :IA32 +32-bit+)

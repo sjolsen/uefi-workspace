@@ -3,18 +3,19 @@ uefi-workspace
 
 This is a development environment for building and testing
 [Refinery](https://github.com/sjolsen/refinery), a UEFI application targeting
-TianoCore EDK II. Source control is handled through Git submodules, and common
-development tasks are implemented as command-line verbs via the
-increasingly-inaccurately named `emulate.py`. It _should_ be possible to
-bootstrap at least the QEMU simulation using just `git clone` and `emulate.py`
-on a modern Linux system.
+TianoCore EDK II. Source control is handled through Git submodules, and the
+development environment is written in Common Lisp.
 
-Source-code formatting is handled through `uncrustify.py`. This requires some
-hinky .NET nonsense that is *technically* documented in the EDK II developer's
-guide but which I haven't written down and don't remember. Sorry :)
+The development environment, including quicklisp and ASDF configuration, can be
+initialized by loading setup.lisp. SBCL is assumed. The UEFI-WORKSPACE package
+exposes the common operations.
 
-The most interesting command for a casual observer will be `emulate.py buildall`
-followed by `emulate.py run`. This will build the Refinery application and OVMF
+Source-code formatting is handled through `uncrustify`. This requires some hinky
+.NET nonsense that is *technically* documented in the EDK II developer's guide
+but which I haven't written down and don't remember. Sorry :)
+
+The most interesting command for a casual observer will be `(build-all)`
+followed by `(run-qemu)`. This will build the Refinery application and OVMF
 firmware for QEMU, set up a boot disk and BIOS ROM, and boot QEMU. The resulting
 application is not that interesting at the moment, but it does demonstrate a few
 things:
