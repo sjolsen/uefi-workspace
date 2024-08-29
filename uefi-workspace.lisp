@@ -25,41 +25,61 @@
                :error-output t)
   (values))
 
-(defun build-ovmf ()
-  "Build a UEFI firmware image for QEMU"
-  (build #P"OvmfPkg/OvmfPkgX64.dsc"))
+(defun ovmf-name (arch)
+  (ecase arch
+    (:IA32 "Ia32")
+    (:X64  "X64")))
 
-(defun build-refinery ()
+(defconstant +default-arch+ :X64)
+
+(defun build-ovmf (&optional (arch +default-arch+))
+  "Build a UEFI firmware image for QEMU"
+  (build (format nil "OvmfPkg/OvmfPkg~A.dsc" (ovmf-name arch)) :arch arch))
+
+(defun build-refinery (&optional (arch +default-arch+))
   "Build the Refinery application"
-  (build #P"RefineryPkg/RefineryPkg.dsc"))
+  (build #P"RefineryPkg/RefineryPkg.dsc" :arch arch))
 
 (defun build-all ()
   "Build all the software needed to run the Refinery application"
   (build-basetools)
-  (build-ovmf)
-  (build-refinery))
+  (build-ovmf :IA32)
+  (build-ovmf :X64)
+  (build-refinery :IA32)
+  (build-refinery :X64))
 
-(defun run-qemu (&key debug)
+(defun memory-model-for-arch (arch)
+  (ecase arch
+    (:IA32 +32-bit+)
+    (:X64  +64-bit+)))
+
+(defun run-qemu (&key (arch +default-arch+) debug)
   "Launch QEMU and boot into the Refinery application"
-  (let ((hda (join *build-dir* #P"hda/")))
+  (let* ((arch-name (string arch))
+         (ovmf-name (ovmf-name arch))
+         (qemu-dir (join *build-dir* (format nil "Qemu~A/" arch-name)))
+         (hda (join qemu-dir #P"hda/"))
+         (arch-dir (join *build-dir* (format nil "Refinery/DEBUG_GCC/~A/" arch-name))))
     (flet ((symlink (old new)
              (unless (uiop:file-exists-p new)
                (ensure-directories-exist new)
                (sb-posix:symlink old new))))
-      (symlink (join *build-dir* #P"Refinery/DEBUG_GCC/X64/Refinery.efi")
-               (join hda #P"EFI/BOOT/BOOTx64.efi"))
-      (symlink (join *build-dir* #P"Refinery/DEBUG_GCC/X64/UsbMouseDxe.efi")
+      (symlink (join arch-dir #P"Refinery.efi")
+               (join hda (format nil "EFI/BOOT/BOOT~A.efi" arch-name)))
+      (symlink (join arch-dir #P"UsbMouseDxe.efi")
                (join hda #P"EFI/Refinery/Drivers/USBMouseDxe.efi")))
     (with-open-file (stream (join hda #P"EFI/Refinery/initial-image.bxo")
                             :direction :output
                             :element-type '(unsigned-byte 8)
                             :if-exists :supersede
                             :if-does-not-exist :create)
-      (with-image +64-bit+
+      (with-image (memory-model-for-arch arch)
         (let ((root (make-initial-image)))
           (write-object-file root stream))))
-    (let* ((bios (join *build-dir* #P"OvmfX64/DEBUG_GCC/FV/OVMF.fd"))
-           (args (list "qemu-system-x86_64"
+    (let* ((bios (join *build-dir* (format nil "Ovmf~A/DEBUG_GCC/FV/OVMF.fd" ovmf-name)))
+           (args (list (ecase arch
+                         (:IA32 "qemu-system-i386")
+                         (:X64  "qemu-system-x86_64"))
                        "-net" "none"
                        "-device" "VGA,xres=640,yres=480"
                        "-display" "gtk,gl=es"
@@ -68,7 +88,7 @@
                        "-drive" (format nil "if=pflash,unit=0,format=raw,file=~A" (namestring bios))
                        "-drive" (format nil "format=raw,file=fat:~A" (namestring hda))
                        "-snapshot"))
-           (debug-file (join *build-dir* #P"debug.log"))
+           (debug-file (join qemu-dir #P"debug.log"))
            (debug-args (list "-debugcon" (format nil "file:~A" (namestring debug-file))
                              "-global" "isa-debugcon.iobase=0x402")))
       (when debug
@@ -76,13 +96,13 @@
       (run-program args :error-output t)))
   (values))
 
-(defun test-c (arch memory-model)
+(defun test-c (&optional (arch +default-arch+))
   "Build and run the unit tests for the C implementation of Borax"
   (let* ((test-base (join *build-dir* (format nil "Borax/DEBUG_GCC/~A/" (string arch))))
          (test-bin (join test-base #P"BoraxVirtualMachineTest"))
          (test-file (join test-base #P"TestFile.bxo")))
     (ensure-directories-exist test-file)
-    (make-test-file test-file memory-model)
+    (make-test-file test-file (memory-model-for-arch arch))
     (build #P"BoraxPkg/BoraxPkg.dsc" :arch arch)
     (run-program (list "valgrind" "--error-exitcode=1" test-bin test-file)
                  :output t
@@ -97,5 +117,5 @@
   "Run all tests"
   (test-lisp)
   (fresh-line)
-  (test-c :IA32 +32-bit+)
-  (test-c :X64 +64-bit+))
+  (test-c :IA32)
+  (test-c :X64))
