@@ -63,7 +63,7 @@
   (let* ((arch-args (when arch
                       (list "-a" (string arch))))
          (args (list* "build" "-p" platform arch-args)))
-    (run-program args :error-output t))
+    (run-program args :output t :error-output t))
   (values))
 
 (defun find-source-files (root)
