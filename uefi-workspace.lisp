@@ -48,7 +48,7 @@
       (symlink (join *build-dir* #P"Refinery/DEBUG_GCC/X64/Refinery.efi")
                (join hda #P"EFI/BOOT/BOOTx64.efi"))
       (symlink (join *build-dir* #P"Refinery/DEBUG_GCC/X64/UsbMouseDxe.efi")
-               (join hda #P"EFI/Drivers/USBMouseDxe.efi")))
+               (join hda #P"EFI/Refinery/Drivers/USBMouseDxe.efi")))
     (let* ((bios (join *build-dir* #P"OvmfX64/DEBUG_GCC/FV/OVMF.fd"))
            (args (list "qemu-system-x86_64"
                        "-net" "none"
