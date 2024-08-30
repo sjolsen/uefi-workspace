@@ -1,6 +1,8 @@
 (uiop:define-package :uefi-workspace
-  (:mix :uiop/common-lisp :borax-virtual-machine/image)
-  (:use :borax-build/c-testing :borax-virtual-machine/initial-image
+  (:use :uiop/common-lisp
+        :borax-build/c-testing
+        :borax-virtual-machine/image
+        :borax-virtual-machine/initial-image
         :borax-virtual-machine/object-file)
   (:use-reexport :uefi-workspace/edk2)
   (:export #:reload
