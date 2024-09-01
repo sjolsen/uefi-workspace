@@ -74,8 +74,8 @@
                             :if-exists :supersede
                             :if-does-not-exist :create)
       (with-image (memory-model-for-arch arch)
-        (let ((root (make-initial-image)))
-          (write-object-file root stream))))
+        (make-initial-image)
+        (write-object-file (root *image*) stream)))
     (let* ((bios (join *build-dir* (format nil "Ovmf~A/DEBUG_GCC/FV/OVMF.fd" ovmf-name)))
            (args (list (ecase arch
                          (:IA32 "qemu-system-i386")
