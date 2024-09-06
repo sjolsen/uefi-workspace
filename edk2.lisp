@@ -59,10 +59,13 @@
 (defvar *build-dir*
   (join *workspace* #P"Build/"))
 
-(defun build (platform &key arch)
-  (let* ((arch-args (when arch
+(defun build (platform &key arch defines)
+  (let* ((base-args (list "build" "-p" platform))
+         (arch-args (when arch
                       (list "-a" (string arch))))
-         (args (list* "build" "-p" platform arch-args)))
+         (def-args (loop for def in defines
+                         nconcing (list "-D" def)))
+         (args (nconc base-args arch-args def-args)))
     (run-program args :output t :error-output t))
   (values))
 

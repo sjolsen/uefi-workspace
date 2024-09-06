@@ -32,21 +32,23 @@
 
 (defconstant +default-arch+ :X64)
 
-(defun build-ovmf (&optional (arch +default-arch+))
+(defun build-ovmf (&key (arch +default-arch+))
   "Build a UEFI firmware image for QEMU"
   (build (format nil "OvmfPkg/OvmfPkg~A.dsc" (ovmf-name arch)) :arch arch))
 
-(defun build-refinery (&optional (arch +default-arch+))
+(defun build-refinery (&key (arch +default-arch+) debug)
   "Build the Refinery application"
-  (build #P"RefineryPkg/RefineryPkg.dsc" :arch arch))
+  (build #P"RefineryPkg/RefineryPkg.dsc"
+         :arch arch
+         :defines (when debug '("DEBUG_ON_OVMF_IO_PORT=TRUE"))))
 
 (defun build-all ()
   "Build all the software needed to run the Refinery application"
   (build-basetools)
-  (build-ovmf :IA32)
-  (build-ovmf :X64)
-  (build-refinery :IA32)
-  (build-refinery :X64))
+  (build-ovmf :arch :IA32)
+  (build-ovmf :arch :X64)
+  (build-refinery :arch :IA32)
+  (build-refinery :arch :X64))
 
 (defun memory-model-for-arch (arch)
   (ecase arch
