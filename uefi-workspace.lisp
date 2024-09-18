@@ -98,6 +98,12 @@
       (run-program args :error-output t)))
   (values))
 
+(defun run (&key (arch +default-arch+) debug)
+  (reload)
+  (uncrustify)
+  (build-refinery :arch arch :debug debug)
+  (run-qemu :arch arch :debug debug))
+
 (defun test-c (&optional (arch +default-arch+))
   "Build and run the unit tests for the C implementation of Borax"
   (let* ((test-base (join *build-dir* (format nil "Borax/DEBUG_GCC/~A/" (string arch))))
