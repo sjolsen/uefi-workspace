@@ -112,7 +112,7 @@
     (ensure-directories-exist test-file)
     (make-test-file test-file (memory-model-for-arch arch))
     (build #P"BoraxPkg/BoraxPkg.dsc" :arch arch)
-    (run-program (list "valgrind" "--error-exitcode=1" test-bin test-file)
+    (run-program (list "valgrind" "--error-exitcode=1" test-bin test-base)
                  :output t
                  :error-output t))
   (values))
@@ -123,6 +123,8 @@
 
 (defun test ()
   "Run all tests"
+  (reload)
+  (uncrustify)
   (test-lisp)
   (fresh-line)
   (test-c :IA32)
