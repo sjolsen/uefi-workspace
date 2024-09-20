@@ -55,6 +55,16 @@
     (:IA32 +32-bit+)
     (:X64  +64-bit+)))
 
+(defun write-initial-image (path memory-model)
+  (with-open-file (stream path
+                          :direction :output
+                          :element-type '(unsigned-byte 8)
+                          :if-exists :supersede
+                          :if-does-not-exist :create)
+    (with-image memory-model
+      (make-initial-image)
+      (write-object-file (root *image*) stream))))
+
 (defun run-qemu (&key (arch +default-arch+) debug)
   "Launch QEMU and boot into the Refinery application"
   (let* ((arch-name (string arch))
@@ -70,14 +80,8 @@
                (join hda (format nil "EFI/BOOT/BOOT~A.efi" arch-name)))
       (symlink (join arch-dir #P"UsbMouseDxe.efi")
                (join hda #P"EFI/Refinery/Drivers/USBMouseDxe.efi")))
-    (with-open-file (stream (join hda #P"EFI/Refinery/initial-image.bxo")
-                            :direction :output
-                            :element-type '(unsigned-byte 8)
-                            :if-exists :supersede
-                            :if-does-not-exist :create)
-      (with-image (memory-model-for-arch arch)
-        (make-initial-image)
-        (write-object-file (root *image*) stream)))
+    (write-initial-image (join hda #P"EFI/Refinery/initial-image.bxo")
+                         (memory-model-for-arch arch))
     (let* ((bios (join *build-dir* (format nil "Ovmf~A/DEBUG_GCC/FV/OVMF.fd" ovmf-name)))
            (args (list (ecase arch
                          (:IA32 "qemu-system-i386")
@@ -108,9 +112,11 @@
   "Build and run the unit tests for the C implementation of Borax"
   (let* ((test-base (join *build-dir* (format nil "Borax/DEBUG_GCC/~A/" (string arch))))
          (test-bin (join test-base #P"BoraxVirtualMachineTest"))
-         (test-file (join test-base #P"TestFile.bxo")))
+         (test-file (join test-base #P"TestFile.bxo"))
+         (initial-image (join test-base #P"InitialImage.bxo")))
     (ensure-directories-exist test-file)
     (make-test-file test-file (memory-model-for-arch arch))
+    (write-initial-image initial-image (memory-model-for-arch arch))
     (build #P"BoraxPkg/BoraxPkg.dsc" :arch arch)
     (run-program (list "valgrind" "--error-exitcode=1" test-bin test-base)
                  :output t
